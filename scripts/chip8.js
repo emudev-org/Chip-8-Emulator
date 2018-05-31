@@ -191,11 +191,73 @@ var Chip8 = function () {
      },
 
      emulateCycle: function () {
+         // fetch instruction from memory
          var opcode = this.memory[this.pc] << 8 | this.memory[this.pc + 1];
 
+         // move to next instruction
          this.pc += 2;
+         
+         // extract opcode fields for ease of use here
+         var x   = ((opcode) >> 8) & 0xF;
+         var y   = ((opcode) >> 4) & 0xF;
+         var nn  = ((opcode) >> 0) & 0xFF;
+         var nnn = ((opcode) >> 0) & 0xFFF;
 
-         alert("Opcode " + opcode + " not implemented")
+         
+
+         switch((opcode) >> 12) {
+            case 0x1: this.pc = nnn; break;
+            case 0x3: if (this.v[x] === nn ) { this.pc += 2; } break;
+            case 0x6: this.v[x] = nn; break;
+            case 0x7: this.v[x] = this.v[x] + nn; break;
+            case 0xa: this.i = nnn; break;
+
+            case 0xd:
+                this.v[0xF] = 0;
+
+                 var height = opcode & 0x000F;
+                 var registerX = this.v[x];
+                 var registerY = this.v[y];
+                 var x, y, spr;
+
+                 for (y = 0; y < height; y++) {
+                     spr = this.memory[this.i + y];
+                     for (x = 0; x < 8; x++) {
+                         if ((spr & 0x80) > 0) {
+                             if (this.setPixel(registerX + x, registerY + y)) {
+                                 this.v[0xF] = 1;
+                             }
+                         }
+                         spr <<= 1;
+                     }
+                 }
+                 this.drawFlag = true;
+            break;
+
+            case 0xc: this.v[x] =  (Math.random() * 256) & nn; break;
+            case 0xf: {
+                switch (opcode & 0xFF) {
+                    case 0x08: this.v[x] = this.delayTimer; break;
+                    case 0x29: this.i = this.v[x] * 5; break;
+                    case 0x1e: this.i += this.v[x]; break;
+                    case 0x55:
+                        for (var i = 0; i <= x; i++) {
+                             this.memory[this.i + i] = this.v[i];
+                         }
+                        break;
+
+                    default:
+                        alert("Opcode prefix 0xF " + opcode.toString(16) + " not implemented")
+                    break;
+                }
+            }
+            break;
+            
+            default:
+                alert("Opcode ??!!" + opcode.toString(16) + " not implemented")
+            break;
+         }
+         
          // Check first nibble to determine opcode.
          
          // decode
