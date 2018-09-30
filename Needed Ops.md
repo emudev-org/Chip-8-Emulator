@@ -1,0 +1,12 @@
+IBM:
+
+CLS
+JP
+LD I, ADDR
+LD Vx, byte
+DRW
+JMP
+
+PUZZLE:
+RND
+SE

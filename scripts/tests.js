@@ -285,22 +285,40 @@ function testXOR(core) {
 	testBinaryOp(core, 0x8003, function (a, b) { return a ^ b; });
 }
 
+function testLD_I(core) {
+	for (var i = 0; i < 100; i++)
+	{
+		core.reset();
+
+		var nnn = randomInteger(4095);
+
+		core.emulateInstruction(0xA000 | nnn);
+
+		assert(core.i == nnn, "Register not set to value nnn");
+	}
+}
+
 function testChip8Core(core) {
 
 	var tests = [
 		testReset,
-		testRet,
-		testCall,
+
 		testJP,
 		testSE,
-		testSNE,
-		testSE_Reg,
-		testLD,
-		testADD,
-		testLD_Reg,
-		testOR,
-		testAND,
-		testXOR,
+		
+		testLD_I,
+		
+		// testRet,
+		// testCall,
+
+		// testSNE,
+		// testSE_Reg,
+		// testLD,
+		// testADD,
+		// testLD_Reg,
+		// testOR,
+		// testAND,
+		// testXOR,
 	];
 
 	for (var i = 0; i < tests.length; i++) {

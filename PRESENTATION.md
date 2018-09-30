@@ -51,19 +51,20 @@ Execution starts at 0x200
 
 ... That's it
 
-DeMo
-----
-
-[.....]
-
-
-Help
+Basic systems concepts
 ----
 
 What is binary?
- 1 byte = 8 bits = 8 switches storing the number in powers of 2
+ Binary is a number systems that only has '0' and '1'
 
-What is hex?
+ binary 1000 is 8 (1 * 8 + 0 * 4 + 0 * 2 + 0) decimal
+ binary 1001 is 9 (1 * 8 + 0 * 4 + 0 * 2 + 1) decimal
+ binary 1100 is 12 (1 * 8 + 1 * 4 + 0 * 2 + 0) decimal
+And so on.
+
+
+What is hex (aka hexadecimal)?
+ Hex is a number system that has 16 symbols '0' - '9', 'A' - 'F'
  Similar, but instead of '0' and '1' digits there are 16, '0' to 'F'
 
 
