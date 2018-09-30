@@ -1,8 +1,7 @@
 <!doctype html>
-<head xmlns="http://www.w3.org/1999/html">
+	<head xmlns="http://www.w3.org/1999/html">
         <title>Chip 8 Emulator</title>
     </head>
-    <link href='http://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' type='text/css'>
 
     <style>
 
@@ -75,7 +74,6 @@
 		}
 		
 		ol {
-			width: 120px;
 			list-style: none;
 			padding: 0;
 		}
@@ -94,6 +92,10 @@
 			box-shadow: 1px 1px 1px #ddd;
 		}
 
+		kbd.pressed {
+			background-color: lightgreen;
+		}
+
     </style>
 
     <body>
@@ -107,24 +109,7 @@
 		            <select id="program"><option></option></select>
 				</fieldset>
 			</form>
-			<form action="">
-				<fieldset>
-					<label for="color">Color</label>
-					<input type="color" id="color" value="#00ff00" />
-				</fieldset>
-	        </form>
-			<form action="">
-				<fieldset>
-					<label for="gamepad">Enable Gamepad</label>
-					<input type="checkbox" id="gamepad" value="true" checked="checked" />
-					<button type="button" id="test-gamepad">Test Gamepad</button>
-				</fieldset>
-	        </form>
-			<form action="">
-				<fieldset>
-					<button type="button" id="enable-full-screen">Full Screen</button>
-				</fieldset>
-	        </form>
+			<button id="run-tests">Run Tests</button>
 		</section>
 
 	    <canvas></canvas>
@@ -132,39 +117,45 @@
 		<dl>
 			<dt>Program</dt>
 			<dd id="loaded-program">None</dd>
-			<dt><abbr title="Frames Per Second">FPS</abbr></dt>
-			<dd id="fps">0</dd>
 		</dl>
 		
 		<p>Chip-8 uses a hexadecimal input. Use the keys below, or use a gamepad if enabled.</p>
 		
 		<ol>
-			<li><kbd title="0">1</kbd></li>
-			<li><kbd title="1">2</kbd></li>
-			<li><kbd title="2">3</kbd></li>
-			<li><kbd title="3">4</kbd></li>
-			<li><kbd title="4">Q</kbd></li>
-			<li><kbd title="5">W</kbd></li>
-			<li><kbd title="6">E</kbd></li>
-			<li><kbd title="7">R</kbd></li>
-			<li><kbd title="8">A</kbd></li>
-			<li><kbd title="9">S</kbd></li>
-			<li><kbd title="0">D</kbd></li>
-			<li><kbd title="A">F</kbd></li>
-			<li><kbd title="B">Z</kbd></li>
-			<li><kbd title="C">X</kbd></li>
-			<li><kbd title="D">C</kbd></li>
-			<li><kbd title="E">V</kbd></li>
+			<li><kbd title="1" >1 (1)</kbd></li>
+			<li><kbd title="2" >2 (2)</kbd></li>
+			<li><kbd title="3" >3 (3)</kbd></li>
+			<li><kbd title="12">C (4)</kbd></li>
+		</ol>
+		<ol>
+			<li><kbd title="4" >4 (q)</kbd></li>
+			<li><kbd title="5" >5 (w)</kbd></li>
+			<li><kbd title="6" >6 (e)</kbd></li>
+			<li><kbd title="13">D (r)</kbd></li>
+		</ol>
+		<ol>
+			<li><kbd title="7" >7 (a)</kbd></li>
+			<li><kbd title="8" >8 (s)</kbd></li>
+			<li><kbd title="9" >9 (d)</kbd></li>
+			<li><kbd title="14">E (f)</kbd></li>
+		</ol>
+		<ol>
+			<li><kbd title="10">A (z)</kbd></li>
+			<li><kbd title="0" >0 (x)</kbd></li>
+			<li><kbd title="11">B (c)</kbd></li>
+			<li><kbd title="15">F (v)</kbd></li>
 		</ol>
 		
         <p>
-			By <a href="http://alexanderdickson.com">Alex Dickson</a>. Based on <a href="http://devernay.free.fr/hacks/chip8/C8TECH10.HTM">Cowgod's Chip-8 Technical Reference</a>.
+        	Based on the chip8 emulator by <a href="http://alexanderdickson.com">Alex Dickson</a>. Based on <a href="http://devernay.free.fr/hacks/chip8/C8TECH10.HTM">Cowgod's Chip-8 Technical Reference</a>.
 		</p>
 
         <script src="scripts/polyfills.js"></script>
-        <script src="scripts/gamepad.js"></script>
         <script src="scripts/renderer.js"></script>
         <script src="scripts/chip8.js"></script>
+        <script src="scripts/tests.js"></script>
+        <script src="scripts/roms.js"></script>
+
         <script>
             (function() {
 				var CELL_SIZE = 8;
@@ -182,41 +173,28 @@
 				// Set up program loading form.
                 (function() {
 	                var select = document.querySelector("#program");
-					var programLoaded = document.querySelector("#loaded-program");
-	                var programs = ["15PUZZLE", "BLINKY", "BLITZ", "BRIX", "CONNECT4", "GUESS", "HIDDEN", "IBM", "INVADERS", "KALEID", "MAZE", "MERLIN", "MISSILE", "PONG", "PONG2", "PUZZLE", "SYZYGY", "TANK", "TETRIS", "TICTAC", "UFO", "VBRIX", "VERS", "WIPEOFF"];
+					var programLoaded = document.querySelector("#loaded-program"); 
 
-	                programs.forEach(function(program) {
+	                Object.keys(games).forEach(function(game) {
 	                    var option = document.createElement("option");
-	                    option.textContent = program;
+	                    option.textContent = game;
 	                    select.add(option);
 	                });
 
 	                select.addEventListener("change", function(event) {
-	                    var value = select.value;
-						var xhr;
-						
-	                    if ( ! value) {
-	                        alert("Please select a ROM.");
-	                        return;
-	                    }
 
-	                    // Load program.
-	                    xhr = new XMLHttpRequest();
-	                    xhr.open("GET", "roms/" + value, true);
-	                    xhr.responseType = "arraybuffer";
+	                    var game = select.value;
 
-	                    xhr.onload = function () {
-	                        ch.stop();
-	                        ch.reset();
-	                        ch.loadProgram(new Uint8Array(xhr.response));
-	                        ch.start();
-							programLoaded.textContent = value;
-	                    };
+	                	ch.stop();
+                        ch.reset();
+	                    ch.loadProgram(games[game]);
+                        ch.start();
 
-	                    xhr.send();
-						
+						programLoaded.textContent = game;
+
+						console.log("Loaded", game);
+
 						this.blur();
-
 	                });
 				
 				})();
@@ -224,132 +202,14 @@
 				// Color changing.
                 (function() {
 					
-	                var select = document.querySelector("#color");				
+	                var elem = document.querySelector("#run-tests");				
 					
-	                select.addEventListener("change", function(event) {	
-						chRenderer.setFgColor(this.value);
+					elem.addEventListener("click", function(event) {	
+						testChip8Core(ch);
 					});
-					
 				})();
 				
-				// Gamepad support.
-                (function() {
-					
-					var checkbox = document.querySelector("#gamepad");
-					var test = document.querySelector("#test-gamepad");
-					var gamepadId = false;
-					
-					checkbox.checked = GamePad.supported;
 				
-					var gamepad = new GamePad(function(gamepads) {
-						var gamepad = gamepads[0];
-						var buttons;
-						var axes;
-					
-						if ( ! gamepad) {
-							return;
-						}
-
-						// Wikipedia says...
-						// "The '8', '4', '6', and '2' keys are typically used for directional input."
-						// We'll map them onto the D-pad.
-						axes = gamepad.axes;
-						ch.setKeyState(2, axes[1] == 1); // Up
-						ch.setKeyState(8, axes[1] == -1); // Down
-						ch.setKeyState(4, axes[0] == -1); // Left
-						ch.setKeyState(6, axes[0] == 1); // Right
-					
-						// The rest can just be mapped wherever.
-						buttons = gamepad.buttons;
-						ch.setKeyState(1, buttons[0]);
-						ch.setKeyState(3, buttons[1]);
-						ch.setKeyState(5, buttons[2]);
-						ch.setKeyState(7, buttons[3]);
-						ch.setKeyState(9, buttons[4]);
-						ch.setKeyState(10, buttons[5]);
-						ch.setKeyState(11, buttons[6]);
-						ch.setKeyState(12, buttons[7]);
-						ch.setKeyState(13, buttons[8]);
-						ch.setKeyState(14, buttons[9]);
-						
-						gamepadId = gamepad.id;
-
-					});
-					
-					GamePad.supported && gamepad.start();
-					
-					checkbox.addEventListener("click", function() {
-						
-						if ( ! GamePad.supported) {
-							alert("Your browser doesn't support gamepads.");
-							this.checked = false;
-							return;
-						}
-						
-						gamepad[["stop", "start"][+this.checked]]();
-					});
-					
-					test.addEventListener("click", function() {
-						if (gamepadId === false) {
-							alert("No GamePad detected. Try pressing one if its buttons.");
-						} else {
-							alert("GamePad detected: " + gamepadId);
-						}	
-					});
-					
-				})();
-				
-				// Full screen mode.
-				(function() {
-					var launchFullScreen = (canvas.requestFullScreen ||
-					                    canvas.mozRequestFullScreen ||
-									    canvas.webkitRequestFullScreen).bind(canvas, Element.ALLOW_KEYBOARD_INPUT);
-										
-					var makeEvent = function(prefix) {
-						return "on" + prefix + "fullscreenchange";					
-					};
-															
-					var fullScreenEvent = ["", "webkit", "moz"].filter(function(prefix) {
-						return document.hasOwnProperty(makeEvent(prefix));
-					}).map(function(prefix) { return makeEvent(prefix); })[0];
-					
-					var getFullScreenElement = function () {
-						return document.fullscreenElement ||
-											document.webkitFullscreenElement ||
-											document.mozFullscreenElement;
-					};
-
-					document.querySelector("#enable-full-screen").addEventListener("click", function() {
-						if ( ! launchFullScreen) {
-							alert("Full screen not supported.");
-						} else {
-							launchFullScreen();
-						}
-					});
-									
-					document[fullScreenEvent] = function() {
-						if ( ! getFullScreenElement()) {
-							chRenderer.setCellSize(CELL_SIZE);
-							return;
-						} 
-						
-						var width = screen.width;
-						var height = screen.height;
-						
-						var chWidth = ch.getDisplayWidth();
-						var chHeight = ch.getDisplayHeight();
-						
-						var cellsWidth = Math.floor(width / chWidth) - 1;
-						var cellsHeight = Math.floor(height / chHeight) - 1;
-						
-						var cellSize = Math.min(cellsWidth, cellsHeight);
-		
-						chRenderer.setCellSize(cellSize);
-
-					};
-
-				})();
-
                 // Key handling.
                 (function() {
 				
@@ -357,37 +217,39 @@
 	                    49: 0x1,  // 1
 	                    50: 0x2,  // 2
 	                    51: 0x3,  // 3
-	                    52: 0x4,  // 4
-	                    81: 0x5,  // Q
-	                    87: 0x6,  // W
-	                    69: 0x7,  // E
-	                    82: 0x8,  // R
-	                    65: 0x9,  // A
-	                    83: 0xA,  // S
-	                    68: 0xB,  // D
-	                    70: 0xC,  // F
-	                    90: 0xD,  // Z
-	                    88: 0xE,  // X
-	                    67: 0xF,  // C
-	                    86: 0x10  // V
+	                    52: 0xC,  // 4
+	                    81: 0x4,  // Q
+	                    87: 0x5,  // W
+	                    69: 0x6,  // E
+	                    82: 0xD,  // R
+	                    65: 0x7,  // A
+	                    83: 0x8,  // S
+	                    68: 0x9,  // D
+	                    70: 0xE,  // F
+	                    90: 0xA,  // Z
+	                    88: 0x0,  // X
+	                    67: 0xB,  // C
+	                    86: 0xF   // V
 	                };
 
 	                document.addEventListener("keydown", function(event) {
-	                    ch.setKey(translateKeys[event.keyCode]);
+	                	var key = translateKeys[event.keyCode];
+	                	if (typeof key == "number") {
+							console.log(key, "pressed");
+							ch.setKey(key);
+	                		document.querySelector("kbd[title='" + key + "']").classList.add("pressed");
+	                	}
 	                });
 
 	                document.addEventListener("keyup", function(event) {
-	                    ch.unsetKey(translateKeys[event.keyCode]);
+
+	                	var key = translateKeys[event.keyCode];
+	                	if (typeof key == "number") {
+							console.log(key, "released");
+							ch.unsetKey(key);
+	                		document.querySelector("kbd[title='" + key + "']").classList.remove("pressed");
+	                	}
 	                });
-				})();
-				
-				// FPS support.
-				(function() {
-					var fpsOutput = document.querySelector("#fps");
-					setInterval(function() {
-						fpsOutput.textContent = chRenderer.getFps().toPrecision(2);
-					}, 1e3);
-					
 				})();
 
             })();

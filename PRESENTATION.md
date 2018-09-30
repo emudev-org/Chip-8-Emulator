@@ -19,7 +19,11 @@ Main features
 
 - 4096 bytes of ram (!!)
 
-- 16 8-bit registers (V0 to VF). VF also serves as "FLAG"
+- 16 8-bit general purpose registers (V0 to VF). VF also serves as "FLAG"
+
+- 2 16-bit special purpose registers, PC (Program Coutnter) and I (index)
+
+- one 4-bit special purpose register, SP (Stack Pointer)
 
 - Two 60hz timers (Delay, Sound)
 
